@@ -6,5 +6,7 @@ target 'ChatMessenger' do
   use_frameworks!
 
   # Pods for ChatMessenger
-
+  pod 'Firebase/Auth'
+  pod 'Firebase/Database'
+  pod 'Firebase/Core'
 end
