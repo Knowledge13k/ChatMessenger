@@ -8,10 +8,13 @@
 import UIKit
 import Firebase
 import FBSDKLoginKit
+import GoogleSignIn
 
 class LoginViewController: UIViewController {
 
-   
+    
+// Log In Buttons and Funcitons
+    
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.clipsToBounds = true
@@ -76,8 +79,25 @@ class LoginViewController: UIViewController {
         return button
     }()
     
+    private let googleLogInButton = GIDSignInButton()
+    
+    private var logingObserver: NSObjectProtocol?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        logingObserver = NotificationCenter.default.addObserver(forName: .didLogInNotification, object: nil, queue: .main,
+                                                                using: {[weak self] _ in
+                                                                    
+                                                                    guard let strongSelf = self else{
+                                                                        return
+                                                                    }
+                                                                    strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+                                                                    
+                                                                })
+        
+        GIDSignIn.sharedInstance()?.presentingViewController = self
+        
         title = "Log In"
         view.backgroundColor = .white
         
@@ -95,14 +115,22 @@ class LoginViewController: UIViewController {
        
         facebookLoginButton.delegate = self
         
-        // Add subviews
+// Add subviews
+       
         view.addSubview(scrollView)
         scrollView.addSubview(imageView)
         scrollView.addSubview(emailField)
         scrollView.addSubview(passwordField)
         scrollView.addSubview(loginButton)
         scrollView.addSubview(facebookLoginButton)
+        scrollView.addSubview(googleLogInButton)
         
+    }
+    
+    deinit{
+        if let observer = logingObserver{
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     
     override func viewDidLayoutSubviews() {
@@ -130,7 +158,12 @@ class LoginViewController: UIViewController {
                                       y:loginButton.bottomn+10,
                                       width:scrollView.width-60,
                                  height:52)
-        facebookLoginButton.frame.origin.y = loginButton.bottomn+20
+        googleLogInButton.frame = CGRect(x: 30,
+                                      y:facebookLoginButton.bottomn+10,
+                                      width:scrollView.width-60,
+                                 height:52)
+        
+        
         
     }
     
@@ -212,7 +245,7 @@ extension LoginViewController: LoginButtonDelegate{
         }
         
         let facebookRequest = FBSDKLoginKit.GraphRequest(graphPath: "me",
-                                                         parameters: ["fields": "id,email,name"],
+                                                         parameters: ["fields": "id,email,name,picture.width(480).height(480)"],
                                                          tokenString: token,
                                                          version: nil,
                                                          httpMethod: .get)
